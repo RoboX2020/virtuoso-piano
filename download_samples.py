@@ -1,3 +1,8 @@
+# ============================================================================
+# download_samples.py - one-time setup: fetch the 36 piano-note mp3s the
+# audio engine needs into ./assets (see the note list in audio_engine.py).
+# Run this once before starting the app.
+# ============================================================================
 import requests
 import os
 

@@ -1,8 +1,20 @@
+# ============================================================================
+# audio_engine.py - the piano sound. All 36 note recordings (3 octaves) are
+# decoded from mp3 into memory ONCE at startup, then mixed live.
+#
+# Why a callback mixer: sounddevice calls audio_callback on its own thread
+# every few milliseconds asking for the next chunk of sound. Each note
+# currently ringing is a NotePlayer that remembers how far through its
+# sample it is; the callback adds ("mixes") every ringing note together,
+# which is how chords happen, and retires notes that reach their end.
+# ============================================================================
 import sounddevice as sd
 import miniaudio
 import numpy as np
 import os
 
+# One ringing note: just the sample data plus a playback cursor (how many
+# frames have been played so far). The audio callback pulls chunks from it.
 class NotePlayer:
     def __init__(self, data):
         self.data = data
@@ -99,6 +111,9 @@ class AudioEngine:
         for r in removals:
             self.active_notes.remove(r)
 
+    # Start a note ringing: wrap its sample in a fresh NotePlayer and add it
+    # to the mix list. Called from the main (game) thread when a finger
+    # enters a key zone; the audio thread picks it up on its next callback.
     def play_note(self, index):
         if index in self.sounds:
             # Create a new playback instance for this sound

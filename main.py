@@ -1,3 +1,20 @@
+# ============================================================================
+# main.py - an air piano: play notes by pointing at the webcam.
+#
+# How it works, end to end:
+#   1. The webcam feed fills the window (mirrored, like a real mirror).
+#   2. MediaPipe (vision_engine) finds your hands and returns the 5
+#      fingertip positions of up to 2 hands, as 0-1 fractions of the frame.
+#   3. The screen is divided into 12 vertical strips ("segments"). Only the
+#      bottom 40% counts as the "key zone" - dip a fingertip into a strip's
+#      key zone and that strip's piano note plays.
+#   4. Notes are real piano samples (audio_engine), so multiple fingers can
+#      ring at once, like a real piano.
+#
+# Controls: Q quits, S switches scale (chromatic <-> C-major song mode),
+# Up/Down shift the octave. Needs a webcam and the sample mp3s
+# (run download_samples.py once first).
+# ============================================================================
 import cv2
 import pygame
 import sys
@@ -62,6 +79,10 @@ def main():
     # Our array is C3...B3 (0-11), C4...B4 (12-23), C5...B5 (24-35)
     octave_shift = 1 
     
+    # Map a screen segment (0-11, left to right) to a note number in the
+    # 36-sample array (3 octaves x 12 semitones). In chromatic mode each
+    # segment is one semitone; in "song mode" the segments become only the
+    # white keys of C major, so anything you play sounds in tune.
     def get_note_index(segment_i, mode, shift):
         base_index = shift * 12
         
@@ -123,6 +144,9 @@ def main():
                     if 0 <= segment_index < TOTAL_SEGMENTS:
                         current_active_segments.add(segment_index)
 
+        # Edge-triggered note press: play ONLY when a segment goes from
+        # empty to occupied (a "key press"). Without segment_state memory,
+        # the note would retrigger 60 times a second while a finger hovers.
         # Trigger Sounds
         for i in range(TOTAL_SEGMENTS):
             is_active = i in current_active_segments
@@ -137,6 +161,8 @@ def main():
                 segment_state[i] = False
 
         # 4. Rendering
+        # OpenCV and pygame store pixels differently: convert BGR->RGB, then
+        # rotate+flip so numpy's (row, column) layout matches pygame's (x, y).
         frame_rgb = cv2.cvtColor(frame_flipped, cv2.COLOR_BGR2RGB)
         frame_rgb = np.rot90(frame_rgb)
         frame_rgb = np.flipud(frame_rgb)

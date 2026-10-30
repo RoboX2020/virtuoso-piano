@@ -1,3 +1,10 @@
+# ============================================================================
+# vision_engine.py - the hand tracker, a thin wrapper over Google's
+# MediaPipe HandLandmarker. Give it a webcam frame, get back the (x, y)
+# positions of all 5 fingertips of up to 2 hands, as 0-1 fractions of the
+# frame size (0.5, 0.5 = center). main.py turns those into piano presses.
+# The .task file is the pre-trained model; no training happens here.
+# ============================================================================
 import cv2
 import mediapipe as mp
 import time
@@ -28,6 +35,8 @@ class VisionEngine:
         rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=rgb_frame)
         
+        # VIDEO mode requires each frame's timestamp, monotonically
+        # increasing, so the tracker can smooth hand motion over time.
         # Calculate milliseconds relative to start
         current_timestamp = int(time.time() * 1000) - self.start_timestamp
         
