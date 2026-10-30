@@ -66,6 +66,8 @@ def main():
     print(f"Camera opened successfully: {WINDOW_WIDTH}x{WINDOW_HEIGHT}")
 
     # State
+    # # Remembers which strips are currently 'pressed', so each note plays once
+    # # per finger-dip instead of retriggering while the finger hovers.
     segment_state = [False] * TOTAL_SEGMENTS
     running = True
 
@@ -139,7 +141,10 @@ def main():
         
         if fingertips:
             for (x, y) in fingertips:
+                # # A fingertip only counts when it dips into the bottom 40% of the screen
+                # # (the 'key zone'); above that you're just moving, not playing.
                 if y > KEY_ZONE_THRESHOLD:
+                    # # The x position picks which of the 12 strips (which note) the finger is in.
                     segment_index = int(x * TOTAL_SEGMENTS)
                     if 0 <= segment_index < TOTAL_SEGMENTS:
                         current_active_segments.add(segment_index)

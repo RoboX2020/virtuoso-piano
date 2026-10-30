@@ -15,6 +15,8 @@ import os
 
 # One ringing note: just the sample data plus a playback cursor (how many
 # frames have been played so far). The audio callback pulls chunks from it.
+# # One note currently ringing: remembers how far through its recording it
+# # is, so the mixer can ask for the next chunk each callback.
 class NotePlayer:
     def __init__(self, data):
         self.data = data
